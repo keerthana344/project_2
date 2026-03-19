@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Generator & Analyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .container {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 520px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; margin-bottom: 30px; font-size: 1.5rem; }
+        label { display: block; margin-bottom: 6px; font-size: 0.9rem; opacity: 0.8; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus { border-color: #e94560; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #e94560, #c2185b);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            display: none;
+        }
+        .result.show { display: block; }
+        .result h3 { margin-bottom: 8px; color: #e94560; }
+        .sentiment { display: inline-block; padding: 4px 14px; border-radius: 20px; font-weight: bold; margin-top: 10px; }
+        .POSITIVE { background: #2ecc71; }
+        .NEGATIVE { background: #e74c3c; }
+        .NEUTRAL { background: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ AI Content Generator</h1>
+        <label for="topic">Enter a topic:</label>
+        <input id="topic" type="text" placeholder="e.g. Climate change, AI in healthcare...">
+        <button id="genBtn" onclick="generate()">Generate & Analyze</button>
+        <div class="result" id="result">
+            <h3>Generated Tweet:</h3>
+            <p id="content"></p>
+            <h3 style="margin-top:14px;">Sentiment:</h3>
+            <span class="sentiment" id="sentiment"></span>
+        </div>
+    </div>
+    <script>
+        async function generate() {
+            const topic = document.getElementById('topic').value;
+            const btn = document.getElementById('genBtn');
+            const result = document.getElementById('result');
+            if (!topic) { alert('Please enter a topic.'); return; }
+            btn.disabled = true; btn.textContent = 'Generating...';
+            try {
+                const res = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('content').textContent = data.generated_content;
+                    const sentEl = document.getElementById('sentiment');
+                    sentEl.textContent = data.sentiment;
+                    sentEl.className = 'sentiment ' + data.sentiment;
+                    result.classList.add('show');
+                } else {
+                    alert('Error: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (e) { alert('Network error: ' + e.message); }
+            btn.disabled = false; btn.textContent = 'Generate & Analyze';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Text OCR</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #141e30, #243b55);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .container {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 520px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; margin-bottom: 30px; font-size: 1.5rem; }
+        .upload-area {
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover { border-color: #3498db; }
+        .upload-area p { opacity: 0.7; margin-top: 8px; }
+        input[type="file"] { display: none; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(52,152,219,0.4); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            white-space: pre-wrap;
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.show { display: block; }
+        #preview { max-width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Image to Text (OCR)</h1>
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <p>📁 Click to select an image</p>
+            <img id="preview" />
+        </div>
+        <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
+        <button id="extractBtn" onclick="extractText()">Extract Text</button>
+        <div class="result" id="result"></div>
+    </div>
+    <script>
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        async function extractText() {
+            const fileInput = document.getElementById('fileInput');
+            const btn = document.getElementById('extractBtn');
+            const result = document.getElementById('result');
+            if (!fileInput.files.length) { alert('Please select an image first.'); return; }
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            btn.disabled = true; btn.textContent = 'Extracting...';
+            try {
+                const res = await fetch('/extract-text', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    result.textContent = data.text || '(No text detected)';
+                    result.classList.add('show');
+                } else {
+                    result.textContent = 'Error: ' + (data.detail || 'Unknown error');
+                    result.classList.add('show');
+                }
+            } catch (e) {
+                result.textContent = 'Network error: ' + e.message;
+                result.classList.add('show');
+            }
+            btn.disabled = false; btn.textContent = 'Extract Text';
+        }
+    </script>
+</body>
+</html>

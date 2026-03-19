@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Translation Service</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .container {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 500px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; margin-bottom: 30px; font-size: 1.6rem; }
+        label { display: block; margin-bottom: 6px; font-size: 0.9rem; opacity: 0.8; }
+        textarea, input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            outline: none;
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        textarea:focus, input:focus { border-color: #7c5cfc; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #7c5cfc, #a855f7);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,92,252,0.4); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            display: none;
+            white-space: pre-wrap;
+        }
+        .result.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Real-Time Translator</h1>
+        <label for="text">Text to translate:</label>
+        <textarea id="text" placeholder="Enter text here..."></textarea>
+        <label for="lang">Target Language:</label>
+        <input id="lang" type="text" placeholder="e.g. Spanish, French, Japanese">
+        <button id="translateBtn" onclick="translate()">Translate</button>
+        <div class="result" id="result"></div>
+    </div>
+    <script>
+        async function translate() {
+            const text = document.getElementById('text').value;
+            const lang = document.getElementById('lang').value;
+            const btn = document.getElementById('translateBtn');
+            const result = document.getElementById('result');
+            if (!text || !lang) { alert('Please fill in both fields.'); return; }
+            btn.disabled = true; btn.textContent = 'Translating...';
+            try {
+                const res = await fetch('/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, target_language: lang })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    result.textContent = data.translated_text;
+                    result.classList.add('show');
+                } else {
+                    result.textContent = 'Error: ' + (data.detail || 'Unknown error');
+                    result.classList.add('show');
+                }
+            } catch (e) {
+                result.textContent = 'Network error: ' + e.message;
+                result.classList.add('show');
+            }
+            btn.disabled = false; btn.textContent = 'Translate';
+        }
+    </script>
+</body>
+</html>
